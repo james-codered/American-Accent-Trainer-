@@ -1,1002 +1,198 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#0a0f1a">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<title>AccentPro — American Accent Trainer</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg-primary: #0a0f1a;
-    --bg-secondary: #111827;
-    --bg-card: #1a2332;
-    --bg-card-hover: #222d3f;
-    --bg-locked: #0d1219;
-    --accent: #10b981;
-    --accent-hover: #059669;
-    --accent-light: #34d399;
-    --accent-glow: rgba(16,185,129,0.15);
-    --gold: #f59e0b;
-    --gold-light: #fbbf24;
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --text-muted: #64748b;
-    --border: #1e293b;
-    --border-light: #334155;
-    --shadow: 0 4px 6px -1px rgba(0,0,0,0.4), 0 2px 4px -1px rgba(0,0,0,0.2);
-    --shadow-lg: 0 20px 25px -5px rgba(0,0,0,0.5), 0 10px 10px -5px rgba(0,0,0,0.3);
-    --radius: 16px;
-    --radius-sm: 12px;
-    --transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
-  body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: var(--bg-primary); color: var(--text-primary);
-    line-height: 1.6; min-height: 100vh; padding-bottom: 80px;
-    overflow-x: hidden;
-  }
-
-  ::-webkit-scrollbar { width: 6px; }
-  ::-webkit-scrollbar-track { background: var(--bg-primary); }
-  ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
-
-  /* ========== ONBOARDING ========== */
-  #onboardingScreen {
-    position: fixed; inset: 0; z-index: 9999;
-    background: var(--bg-primary);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 24px; text-align: center;
-    transition: opacity 0.6s ease, visibility 0.6s ease;
-  }
-  #onboardingScreen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-  .onboarding-icon { font-size: 4rem; margin-bottom: 20px; animation: bounce 2s infinite; }
-  @keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-  .onboarding-title { font-size: 2rem; font-weight: 800; margin-bottom: 8px; }
-  .onboarding-subtitle { color: var(--text-secondary); font-size: 1rem; margin-bottom: 32px; max-width: 400px; }
-  .name-input {
-    width: 100%; max-width: 320px; background: var(--bg-card); border: 2px solid var(--border);
-    color: var(--text-primary); padding: 14px 18px; border-radius: var(--radius-sm);
-    font-size: 1rem; outline: none; transition: var(--transition); margin-bottom: 16px;
-    text-align: center;
-  }
-  .name-input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-glow); }
-  .name-input::placeholder { color: var(--text-muted); }
-  .start-btn {
-    width: 100%; max-width: 320px; background: linear-gradient(135deg, var(--accent), var(--accent-light));
-    color: white; border: none; padding: 14px 24px; border-radius: var(--radius-sm);
-    font-size: 1rem; font-weight: 700; cursor: pointer; transition: var(--transition);
-  }
-  .start-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(16,185,129,0.3); }
-  .start-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
-  /* ========== LOADING ========== */
-  #loadingScreen {
-    position: fixed; inset: 0; z-index: 9998;
-    background: var(--bg-primary);
-    display: none; flex-direction: column; align-items: center; justify-content: center;
-  }
-  #loadingScreen.show { display: flex; }
-  .loading-spinner {
-    width: 40px; height: 40px; border: 3px solid var(--border);
-    border-top-color: var(--accent); border-radius: 50%;
-    animation: spin 1s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* ========== TOP NAV ========== */
-  .top-nav {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
-    background: rgba(10,15,26,0.92); backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--border); padding: 0 16px;
-  }
-  .top-nav-inner {
-    max-width: 1200px; margin: 0 auto;
-    display: flex; justify-content: space-between; align-items: center; height: 56px;
-  }
-  .logo { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 1.1rem; color: var(--text-primary); text-decoration: none; }
-  .logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, var(--accent), var(--accent-light)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
-  .top-nav-actions { display: flex; align-items: center; gap: 10px; }
-  .streak-badge {
-    display: flex; align-items: center; gap: 4px;
-    background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3);
-    color: var(--gold-light); padding: 4px 10px; border-radius: 100px;
-    font-size: 0.75rem; font-weight: 700;
-  }
-  .xp-badge {
-    display: flex; align-items: center; gap: 4px;
-    background: var(--accent-glow); border: 1px solid rgba(16,185,129,0.3);
-    color: var(--accent-light); padding: 4px 10px; border-radius: 100px;
-    font-size: 0.75rem; font-weight: 700;
-  }
-
-  /* ========== DASHBOARD ========== */
-  .dashboard {
-    padding: 80px 16px 24px; max-width: 800px; margin: 0 auto;
-  }
-  .welcome-text { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 4px; }
-  .welcome-name { font-size: 1.6rem; font-weight: 800; margin-bottom: 20px; }
-  .welcome-name span { background: linear-gradient(135deg, var(--accent), var(--accent-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-
-  .daily-goal {
-    background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(52,211,153,0.05));
-    border: 1px solid rgba(16,185,129,0.2); border-radius: var(--radius);
-    padding: 16px 20px; margin-bottom: 24px;
-  }
-  .daily-goal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-  .daily-goal-title { font-size: 0.9rem; font-weight: 600; }
-  .daily-goal-count { font-size: 0.8rem; color: var(--accent-light); font-weight: 600; }
-  .goal-bar-bg { height: 8px; background: var(--bg-primary); border-radius: 4px; overflow: hidden; }
-  .goal-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-light)); border-radius: 4px; transition: width 0.6s ease; width: 0%; }
-
-  /* ========== LEVELS ========== */
-  .levels-container { max-width: 800px; margin: 0 auto; padding: 0 16px 60px; }
-  .level-card {
-    background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
-    margin-bottom: 16px; overflow: hidden; transition: var(--transition);
-  }
-  .level-card:hover { border-color: var(--border-light); }
-  .level-card.locked { opacity: 0.55; background: var(--bg-locked); }
-  .level-card.locked:hover { border-color: var(--border); transform: none; }
-  .level-card.completed { border-color: rgba(16,185,129,0.3); }
-  .level-card.just-unlocked { animation: unlockPulse 0.8s ease; border-color: var(--accent); }
-  @keyframes unlockPulse { 
-    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16,185,129,0.4); }
-    50% { transform: scale(1.02); box-shadow: 0 0 30px rgba(16,185,129,0.2); }
-    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16,185,129,0); }
-  }
-
-  .level-header {
-    display: flex; align-items: center; gap: 14px; padding: 18px 20px; cursor: pointer;
-    transition: var(--transition);
-  }
-  .level-header:hover { background: var(--bg-card-hover); }
-  .level-number {
-    width: 44px; height: 44px; border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 800; font-size: 1rem; flex-shrink: 0;
-  }
-  .level-number.active { background: linear-gradient(135deg, var(--accent), var(--accent-light)); color: white; }
-  .level-number.locked { background: var(--bg-primary); border: 2px solid var(--border); color: var(--text-muted); }
-  .level-number.completed { background: rgba(16,185,129,0.2); border: 2px solid var(--accent); color: var(--accent-light); }
-
-  .level-info { flex: 1; }
-  .level-title { font-size: 1rem; font-weight: 700; margin-bottom: 2px; }
-  .level-subtitle { font-size: 0.8rem; color: var(--text-secondary); }
-  .level-lock-icon { font-size: 1.2rem; color: var(--text-muted); }
-  .level-stars { display: flex; gap: 2px; }
-  .star { font-size: 0.9rem; color: var(--border-light); transition: var(--transition); }
-  .star.filled { color: var(--gold); }
-
-  .level-progress {
-    padding: 0 20px 16px; display: flex; align-items: center; gap: 10px;
-  }
-  .level-progress-bar-bg { flex: 1; height: 6px; background: var(--bg-primary); border-radius: 3px; overflow: hidden; }
-  .level-progress-bar-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.5s ease; }
-  .level-progress-text { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; }
-
-  .level-content {
-    max-height: 0; overflow: hidden; transition: max-height 0.5s ease, padding 0.4s ease;
-    padding: 0 20px;
-  }
-  .level-content.open { max-height: 3000px; padding: 0 20px 20px; }
-
-  .level-locked-msg {
-    text-align: center; padding: 30px 20px; color: var(--text-muted); font-size: 0.9rem;
-  }
-  .level-locked-msg .lock-emoji { font-size: 2rem; display: block; margin-bottom: 8px; }
-
-  /* ========== PHRASE CARDS ========== */
-  .phrase-list { display: flex; flex-direction: column; gap: 10px; }
-  .phrase-row {
-    display: flex; align-items: center; gap: 12px;
-    background: var(--bg-primary); border: 1px solid var(--border);
-    border-radius: var(--radius-sm); padding: 14px 16px;
-    transition: var(--transition);
-  }
-  .phrase-row:hover { border-color: var(--border-light); }
-  .phrase-row.practiced { border-color: rgba(16,185,129,0.25); background: rgba(16,185,129,0.03); }
-  .phrase-row.practiced .phrase-check { opacity: 1; color: var(--accent); }
-  .phrase-row.highlighted { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); animation: highlightPulse 2s ease infinite; }
-  @keyframes highlightPulse { 0%,100% { box-shadow: 0 0 0 2px var(--accent-glow); } 50% { box-shadow: 0 0 0 4px rgba(16,185,129,0.2); } }
-  .phrase-check { opacity: 0; transition: var(--transition); font-size: 1.1rem; width: 20px; text-align: center; }
-  .phrase-text-small { flex: 1; font-size: 0.95rem; font-weight: 600; }
-  .phrase-pronun-small { font-size: 0.75rem; color: var(--text-muted); }
-  .phrase-actions-small { display: flex; gap: 6px; }
-  .mini-btn {
-    width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--border);
-    background: transparent; color: var(--text-muted); cursor: pointer;
-    display: flex; align-items: center; justify-content: center; transition: var(--transition);
-  }
-  .mini-btn:hover { transform: scale(1.1); }
-  .mini-btn.play:hover { background: var(--accent); border-color: var(--accent); color: white; }
-  .mini-btn.fav:hover { background: rgba(245,158,11,0.15); border-color: var(--gold); color: var(--gold-light); }
-  .mini-btn.fav.active { background: rgba(245,158,11,0.2); border-color: var(--gold); color: var(--gold-light); }
-  .mini-btn svg { width: 14px; height: 14px; }
-
-  /* ========== LEVEL COMPLETE SCREEN ========== */
-  .level-complete-overlay {
-    position: fixed; inset: 0; z-index: 5000;
-    background: rgba(10,15,26,0.95); backdrop-filter: blur(12px);
-    display: none; flex-direction: column; align-items: center; justify-content: center;
-    padding: 24px; text-align: center;
-  }
-  .level-complete-overlay.show { display: flex; }
-  .complete-emoji { font-size: 5rem; margin-bottom: 16px; animation: bounce 1s ease infinite; }
-  .complete-title { font-size: 1.8rem; font-weight: 800; margin-bottom: 8px; }
-  .complete-subtitle { color: var(--text-secondary); font-size: 1rem; margin-bottom: 24px; }
-  .complete-stars { display: flex; justify-content: center; gap: 8px; margin-bottom: 24px; }
-  .complete-star { font-size: 3rem; color: var(--border-light); animation: starPop 0.5s ease forwards; opacity: 0; }
-  .complete-star.earned { color: var(--gold); }
-  .complete-star:nth-child(1) { animation-delay: 0.3s; }
-  .complete-star:nth-child(2) { animation-delay: 0.5s; }
-  .complete-star:nth-child(3) { animation-delay: 0.7s; }
-
-  .complete-stats {
-    background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 20px; max-width: 320px; width: 100%; margin-bottom: 24px;
-  }
-  .complete-stat-row {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 8px 0; border-bottom: 1px solid var(--border);
-  }
-  .complete-stat-row:last-child { border-bottom: none; }
-  .complete-stat-label { font-size: 0.85rem; color: var(--text-secondary); }
-  .complete-stat-value { font-size: 0.95rem; font-weight: 700; color: var(--accent-light); }
-
-  .complete-btn {
-    background: linear-gradient(135deg, var(--accent), var(--accent-light));
-    color: white; border: none; padding: 14px 40px; border-radius: var(--radius-sm);
-    font-size: 1rem; font-weight: 700; cursor: pointer; transition: var(--transition);
-  }
-  .complete-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(16,185,129,0.4); }
-
-  /* ========== UNLOCK SCREEN ========== */
-  .unlock-overlay {
-    position: fixed; inset: 0; z-index: 5001;
-    background: var(--bg-primary);
-    display: none; flex-direction: column; align-items: center; justify-content: center;
-    padding: 24px; text-align: center;
-  }
-  .unlock-overlay.show { display: flex; }
-  .unlock-key { font-size: 4rem; margin-bottom: 16px; animation: keyTurn 1.5s ease; }
-  @keyframes keyTurn { 
-    0% { transform: rotate(-30deg) scale(0.5); opacity: 0; }
-    50% { transform: rotate(10deg) scale(1.1); }
-    100% { transform: rotate(0) scale(1); opacity: 1; }
-  }
-  .unlock-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 8px; color: var(--accent-light); }
-  .unlock-text { color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 32px; }
-  .unlock-card {
-    background: var(--bg-card); border: 2px solid var(--accent); border-radius: var(--radius);
-    padding: 24px; max-width: 340px; width: 100%; margin-bottom: 24px;
-    animation: unlockCardSlide 0.6s ease 0.8s both;
-  }
-  @keyframes unlockCardSlide { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-  .unlock-card-number {
-    width: 48px; height: 48px; background: linear-gradient(135deg, var(--accent), var(--accent-light));
-    border-radius: 12px; display: flex; align-items: center; justify-content: center;
-    font-weight: 800; font-size: 1.2rem; color: white; margin: 0 auto 12px;
-  }
-  .unlock-card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; }
-  .unlock-card-subtitle { font-size: 0.85rem; color: var(--text-secondary); }
-  .unlock-preview {
-    margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);
-    text-align: left;
-  }
-  .unlock-preview-title { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-  .unlock-preview-item {
-    display: flex; align-items: center; gap: 8px;
-    padding: 6px 0; font-size: 0.85rem; color: var(--text-secondary);
-  }
-  .unlock-preview-item::before { content: '•'; color: var(--accent); font-weight: 700; }
-  .unlock-btn {
-    background: linear-gradient(135deg, var(--accent), var(--accent-light));
-    color: white; border: none; padding: 14px 40px; border-radius: var(--radius-sm);
-    font-size: 1rem; font-weight: 700; cursor: pointer; transition: var(--transition);
-    animation: unlockCardSlide 0.6s ease 1s both;
-  }
-  .unlock-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(16,185,129,0.4); }
-  .unlock-coming-soon {
-    margin-top: 20px; font-size: 0.8rem; color: var(--text-muted);
-    animation: unlockCardSlide 0.6s ease 1.2s both;
-  }
-
-  /* ========== TOAST ========== */
-  .toast-container {
-    position: fixed; top: 70px; left: 50%; transform: translateX(-50%); z-index: 3000;
-    display: flex; flex-direction: column; gap: 8px; pointer-events: none;
-  }
-  .toast {
-    background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary);
-    padding: 12px 20px; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 500;
-    box-shadow: var(--shadow-lg); display: flex; align-items: center; gap: 10px;
-    opacity: 0; transform: translateY(-20px); transition: all 0.4s ease;
-    pointer-events: none; min-width: 260px; justify-content: center;
-  }
-  .toast.show { opacity: 1; transform: translateY(0); }
-  .toast.success { border-color: var(--accent); }
-  .toast.warning { border-color: var(--gold); }
-  .toast.error { border-color: #ef4444; }
-
-  /* ========== BOTTOM NAV ========== */
-  .bottom-nav {
-    position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
-    background: rgba(10,15,26,0.95); backdrop-filter: blur(20px);
-    border-top: 1px solid var(--border); padding: 8px 0 12px;
-    display: flex; justify-content: space-around; align-items: center;
-  }
-  .bottom-nav-item {
-    display: flex; flex-direction: column; align-items: center; gap: 3px;
-    color: var(--text-muted); text-decoration: none; font-size: 0.65rem; font-weight: 500;
-    transition: var(--transition); padding: 4px 12px; border-radius: 8px; cursor: pointer;
-    background: none; border: none;
-  }
-  .bottom-nav-item svg { width: 22px; height: 22px; transition: var(--transition); }
-  .bottom-nav-item.active { color: var(--accent); }
-  .bottom-nav-item.active svg { color: var(--accent); }
-
-  /* ========== REVIEW ========== */
-  .review-section { max-width: 800px; margin: 0 auto; padding: 0 16px 40px; }
-  .review-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-  .review-title { font-size: 1.1rem; font-weight: 700; }
-  .review-count { font-size: 0.8rem; color: var(--text-muted); }
-
-  /* ========== RESPONSIVE ========== */
-  @media (max-width: 640px) {
-    .onboarding-title { font-size: 1.6rem; }
-    .welcome-name { font-size: 1.3rem; }
-    .level-header { padding: 14px 16px; }
-    .level-number { width: 38px; height: 38px; font-size: 0.9rem; }
-    .complete-title { font-size: 1.4rem; }
-    .complete-emoji { font-size: 3.5rem; }
-    .unlock-title { font-size: 1.3rem; }
-  }
-</style>
-</head>
-<body>
-
-<!-- ONBOARDING -->
-<div id="onboardingScreen">
-  <div class="onboarding-icon">🇺🇸</div>
-  <div class="onboarding-title">Welcome to AccentPro</div>
-  <div class="onboarding-subtitle">Master the American accent through guided, level-based practice. One step at a time.</div>
-  <input type="text" class="name-input" id="nameInput" placeholder="What is your name?" maxlength="20">
-  <button class="start-btn" id="startBtn" onclick="startApp()" style="opacity:0.5;cursor:not-allowed;" disabled>Get Started</button>
-</div>
-
-<!-- LOADING -->
-<div id="loadingScreen">
-  <div class="loading-spinner"></div>
-</div>
-
-<!-- TOAST -->
-<div class="toast-container" id="toastContainer"></div>
-
-<!-- LEVEL COMPLETE SCREEN -->
-<div class="level-complete-overlay" id="levelCompleteOverlay">
-  <div class="complete-emoji" id="completeEmoji">🎉</div>
-  <div class="complete-title" id="completeTitle">Level 1 Complete!</div>
-  <div class="complete-subtitle" id="completeSubtitle">Amazing work, John!</div>
-  <div class="complete-stars" id="completeStars">
-    <span class="complete-star">⭐</span>
-    <span class="complete-star">⭐</span>
-    <span class="complete-star">⭐</span>
-  </div>
-  <div class="complete-stats" id="completeStats">
-    <div class="complete-stat-row"><span class="complete-stat-label">Phrases Mastered</span><span class="complete-stat-value" id="statPhrases">8/8</span></div>
-    <div class="complete-stat-row"><span class="complete-stat-label">XP Earned</span><span class="complete-stat-value" id="statXP">+80</span></div>
-    <div class="complete-stat-row"><span class="complete-stat-label">Total XP</span><span class="complete-stat-value" id="statTotalXP">80</span></div>
-    <div class="complete-stat-row"><span class="complete-stat-label">Accuracy</span><span class="complete-stat-value">100%</span></div>
-  </div>
-  <button class="complete-btn" onclick="showUnlockScreen()">Continue to Level 2 →</button>
-</div>
-
-<!-- UNLOCK SCREEN -->
-<div class="unlock-overlay" id="unlockOverlay">
-  <div class="unlock-key">🔓</div>
-  <div class="unlock-title">Level Unlocked!</div>
-  <div class="unlock-text">Get ready for your next challenge</div>
-  <div class="unlock-card" id="unlockCard">
-    <div class="unlock-card-number" id="unlockNumber">2</div>
-    <div class="unlock-card-title" id="unlockTitle">Sound Foundations</div>
-    <div class="unlock-card-subtitle" id="unlockSubtitle">Minimal Pairs — Train Your Ear</div>
-    <div class="unlock-preview">
-      <div class="unlock-preview-title">What you'll learn</div>
-      <div class="unlock-preview-item" id="unlockPreview1">Ship vs Sheep — short I vs long E</div>
-      <div class="unlock-preview-item" id="unlockPreview2">Think vs Sink — TH vs S</div>
-      <div class="unlock-preview-item" id="unlockPreview3">Live vs Leave — short vs long vowels</div>
-    </div>
-  </div>
-  <button class="unlock-btn" onclick="startNextLevel()">Start Level 2</button>
-  <div class="unlock-coming-soon" id="unlockComingSoon">🔒 Level 3: Daily Life — coming next</div>
-</div>
-
-<!-- TOP NAV -->
-<nav class="top-nav" id="topNav" style="display:none;">
-  <div class="top-nav-inner">
-    <a href="#" class="logo">
-      <div class="logo-icon">🇺🇸</div>
-      <span>AccentPro</span>
-    </a>
-    <div class="top-nav-actions">
-      <div class="xp-badge" id="xpBadge">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-        <span id="xpCount">0</span> XP
-      </div>
-      <div class="streak-badge" id="streakBadge" style="display:none;">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.6z"/></svg>
-        <span id="streakCount">0</span>
-      </div>
-    </div>
-  </div>
-</nav>
-
-<!-- DASHBOARD -->
-<div class="dashboard" id="dashboard" style="display:none;">
-  <div class="welcome-text">Welcome back,</div>
-  <div class="welcome-name">Hi <span id="userName">Learner</span>! 👋</div>
-  <div class="daily-goal">
-    <div class="daily-goal-header">
-      <span class="daily-goal-title">🎯 Daily Goal</span>
-      <span class="daily-goal-count" id="dailyGoalCount">0 / 5</span>
-    </div>
-    <div class="goal-bar-bg"><div class="goal-bar-fill" id="goalBarFill"></div></div>
-  </div>
-</div>
-
-<!-- LEVELS -->
-<div class="levels-container" id="levelsContainer" style="display:none;"></div>
-
-<!-- REVIEW -->
-<div class="review-section" id="reviewSection" style="display:none;">
-  <div class="review-header">
-    <span class="review-title">🔄 Review</span>
-    <span class="review-count" id="reviewCount">Practice what you learned</span>
-  </div>
-  <div class="phrase-list" id="reviewList"></div>
-</div>
-
-<!-- BOTTOM NAV -->
-<nav class="bottom-nav" id="bottomNav" style="display:none;">
-  <button class="bottom-nav-item active" onclick="switchTab('levels')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-    Levels
-  </button>
-  <button class="bottom-nav-item" onclick="switchTab('review')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-    Review
-  </button>
-  <button class="bottom-nav-item" onclick="switchTab('profile')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-    Profile
-  </button>
-</nav>
-
-<script>
-// ===================== DATA =====================
-const LEVELS = [
-  {
-    id: 1, title: "The Basics", subtitle: "Greetings & Essentials",
-    phrases: [
-      { id: "l1p1", text: "Hello, how are you?", pronun: "heh-LOH, how ar YOO", meaning: "Standard greeting" },
-      { id: "l1p2", text: "Nice to meet you.", pronun: "NYSS too MEET yoo", meaning: "First introduction" },
-      { id: "l1p3", text: "Thank you so much.", pronun: "THANGK yoo soh MUCH", meaning: "Express gratitude" },
-      { id: "l1p4", text: "I appreciate it.", pronun: "eye uh-PREE-shee-ayt it", meaning: "Formal thanks" },
-      { id: "l1p5", text: "Excuse me, please.", pronun: "ik-SKYOOZ mee, PLEEZ", meaning: "Get attention / Apologize" },
-      { id: "l1p6", text: "Could you help me?", pronun: "KOOD yoo HELP mee", meaning: "Ask for assistance" },
-      { id: "l1p7", text: "I do not understand.", pronun: "eye DOO not un-der-STAND", meaning: "Ask for clarification" },
-      { id: "l1p8", text: "Could you repeat that?", pronun: "KOOD yoo ree-PEET that", meaning: "Hear again" }
-    ]
-  },
-  {
-    id: 2, title: "Sound Foundations", subtitle: "Minimal Pairs — Train Your Ear",
-    phrases: [
-      { id: "l2p1", text: "Ship", pronun: "ship", meaning: "Boat — short I sound" },
-      { id: "l2p2", text: "Sheep", pronun: "sheep", meaning: "Animal — long E sound" },
-      { id: "l2p3", text: "Think", pronun: "think", meaning: "To believe — TH sound" },
-      { id: "l2p4", text: "Sink", pronun: "sink", meaning: "Go down — S sound" },
-      { id: "l2p5", text: "Live", pronun: "liv", meaning: "To reside — short I" },
-      { id: "l2p6", text: "Leave", pronun: "leev", meaning: "To go away — long E" },
-      { id: "l2p7", text: "Bad", pronun: "bad", meaning: "Not good — short A" },
-      { id: "l2p8", text: "Bed", pronun: "bed", meaning: "For sleeping — short E" },
-      { id: "l2p9", text: "Full", pronun: "ful", meaning: "Complete — UH sound" },
-      { id: "l2p10", text: "Fool", pronun: "fool", meaning: "Silly person — OO sound" }
-    ]
-  },
-  {
-    id: 3, title: "Daily Life", subtitle: "Phrases You Use Every Day",
-    phrases: [
-      { id: "l3p1", text: "How's it going?", pronun: "HOWZ it GOH-ing", meaning: "Casual greeting" },
-      { id: "l3p2", text: "Long time no see.", pronun: "LONG TYM noh SEE", meaning: "Haven't met in a while" },
-      { id: "l3p3", text: "I will grab a coffee.", pronun: "eye wil GRAB uh KAH-fee", meaning: "Get coffee quickly" },
-      { id: "l3p4", text: "Let us touch base tomorrow.", pronun: "LETS TUCH BAYSS toh-MOR-oh", meaning: "Let's talk briefly" },
-      { id: "l3p5", text: "I will shoot you an email.", pronun: "eye wil SHOOT yoo an EE-mayl", meaning: "I will send email" },
-      { id: "l3p6", text: "That sounds good to me.", pronun: "that SOWNDZ GOOD too mee", meaning: "I agree" },
-      { id: "l3p7", text: "I will keep you posted.", pronun: "eye wil KEEP yoo POH-sted", meaning: "I will update you" },
-      { id: "l3p8", text: "No worries.", pronun: "NOH WUR-eez", meaning: "It is okay" },
-      { id: "l3p9", text: "I am running late.", pronun: "eye AM RUH-ning LAYT", meaning: "Will arrive late" },
-      { id: "l3p10", text: "Catch you later.", pronun: "KACH yoo LAY-ter", meaning: "See you soon" }
-    ]
-  },
-  {
-    id: 4, title: "Interview Ready", subtitle: "Phrases That Get You Hired",
-    phrases: [
-      { id: "l4p1", text: "Tell me about yourself.", pronun: "TEL mee uh-BOUT yur-SELF", meaning: "Opening question" },
-      { id: "l4p2", text: "What are your strengths?", pronun: "WUT ar YOR STRENGTHS", meaning: "Highlight skills" },
-      { id: "l4p3", text: "Why should we hire you?", pronun: "WY SHOOD wee HYRE yoo", meaning: "Sell your value" },
-      { id: "l4p4", text: "I am a fast learner.", pronun: "eye AM uh FAST LUR-ner", meaning: "Show adaptability" },
-      { id: "l4p5", text: "I work well under pressure.", pronun: "eye WURK WEL UN-der PREH-sher", meaning: "Show resilience" },
-      { id: "l4p6", text: "I am a team player.", pronun: "eye AM uh TEEM PLAY-er", meaning: "Show collaboration" },
-      { id: "l4p7", text: "I am results oriented.", pronun: "eye AM ree-ZULTS OR-ee-en-ted", meaning: "Focus on outcomes" },
-      { id: "l4p8", text: "Could you repeat that, please?", pronun: "KOOD yoo ree-PEET that PLEEZ", meaning: "Ask for clarity" },
-      { id: "l4p9", text: "I have experience in this area.", pronun: "eye hav ek-SPEER-ee-ens in this AIR-ee-uh", meaning: "Show background" },
-      { id: "l4p10", text: "I handle deadlines very well.", pronun: "eye HAN-dul DED-lyns WEL", meaning: "Time management" }
-    ]
-  },
-  {
-    id: 5, title: "Sound Like a Native", subtitle: "Slang, Idioms & Tongue Twisters",
-    phrases: [
-      { id: "l5p1", text: "Hit the ground running.", pronun: "hit the GROWND RUH-ning", meaning: "Start immediately" },
-      { id: "l5p2", text: "Ballpark figure.", pronun: "BALL-park FIG-yer", meaning: "Rough estimate" },
-      { id: "l5p3", text: "Think outside the box.", pronun: "THINGK OWTSYD the BOKS", meaning: "Be creative" },
-      { id: "l5p4", text: "Cut to the chase.", pronun: "KUHT too the CHAYSS", meaning: "Get to the point" },
-      { id: "l5p5", text: "Bite the bullet.", pronun: "BYT the BUL-it", meaning: "Face difficulty" },
-      { id: "l5p6", text: "Break the ice.", pronun: "BRAYK the EYESS", meaning: "Ease tension" },
-      { id: "l5p7", text: "Piece of cake.", pronun: "PEESS of KAYK", meaning: "Very easy" },
-      { id: "l5p8", text: "Under the weather.", pronun: "UN-der the WETH-er", meaning: "Feeling sick" },
-      { id: "l5p9", text: "She sells seashells by the seashore.", pronun: "shee SELZ SEE-shelz by the SEE-shor", meaning: "SH/S trainer" },
-      { id: "l5p10", text: "Peter Piper picked a peck of pickled peppers.", pronun: "PEE-ter PY-per PIKT uh PEK of PI-keld PEP-erz", meaning: "P sound mastery" }
-    ]
-  }
-];
-
-// ===================== STATE =====================
-let userName = '';
-let currentLevel = 1;
-let levelProgress = {};
-let totalXP = 0;
-let streak = 0;
-let lastPracticeDate = null;
-let favorites = new Set();
-let dailyPracticed = 0;
-const DAILY_GOAL = 5;
-const STORAGE_KEY = 'accentpro_v3';
-let selectedVoice = null;
-let voicesLoaded = false;
-let justCompletedLevel = null;
-
-// ===================== VOICE ENGINE =====================
-function initVoices() {
-  if (!('speechSynthesis' in window)) return;
-  const voices = window.speechSynthesis.getVoices();
-  if (voices.length === 0) return;
-  selectedVoice = voices.find(v => v.name.includes('Google US English')) ||
-                  voices.find(v => v.name.includes('Samantha')) ||
-                  voices.find(v => v.lang === 'en-US') ||
-                  voices.find(v => v.lang.startsWith('en')) ||
-                  voices[0];
-  voicesLoaded = true;
-}
-
-if ('speechSynthesis' in window) {
-  initVoices();
-  window.speechSynthesis.onvoiceschanged = initVoices;
-}
-
-function speak(text, btn) {
-  if (!('speechSynthesis' in window)) {
-    showToast('❌ Audio not supported', 'error');
-    return;
-  }
-  window.speechSynthesis.cancel();
-  if (btn) {
-    btn.style.transform = 'scale(0.85)';
-    setTimeout(() => btn.style.transform = 'scale(1)', 200);
-  }
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'en-US';
-  utterance.rate = 0.8;
-  utterance.pitch = 1;
-  utterance.volume = 1;
-  if (selectedVoice) utterance.voice = selectedVoice;
-  utterance.onstart = () => showToast('🔊 ' + text, 'success');
-  utterance.onend = () => setTimeout(() => showToast('✅ Good job! Say it out loud.', 'success'), 300);
-  utterance.onerror = () => {
-    const fallback = new SpeechSynthesisUtterance(text);
-    fallback.lang = 'en-US'; fallback.rate = 0.8;
-    window.speechSynthesis.speak(fallback);
-  };
-  window.speechSynthesis.speak(utterance);
-}
-
-// ===================== ONBOARDING =====================
-const nameInput = document.getElementById('nameInput');
-const startBtn = document.getElementById('startBtn');
-
-nameInput.addEventListener('input', () => {
-  const val = nameInput.value.trim();
-  startBtn.disabled = val.length < 2;
-  if (val.length >= 2) {
-    startBtn.style.opacity = '1';
-    startBtn.style.cursor = 'pointer';
-  } else {
-    startBtn.style.opacity = '0.5';
-    startBtn.style.cursor = 'not-allowed';
-  }
-});
-
-// Also check on load in case browser autofilled
-window.addEventListener('load', () => {
-  const val = nameInput.value.trim();
-  startBtn.disabled = val.length < 2;
-  if (val.length >= 2) {
-    startBtn.style.opacity = '1';
-    startBtn.style.cursor = 'pointer';
-  }
-});
-
-nameInput.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter' && nameInput.value.trim().length >= 2) startApp();
-});
-
-function startApp() {
-  userName = nameInput.value.trim();
-  if (!userName) return;
-  document.getElementById('onboardingScreen').classList.add('hidden');
-  document.getElementById('loadingScreen').classList.add('show');
-  setTimeout(() => {
-    document.getElementById('loadingScreen').classList.remove('show');
-    document.getElementById('topNav').style.display = 'block';
-    document.getElementById('dashboard').style.display = 'block';
-    document.getElementById('levelsContainer').style.display = 'block';
-    document.getElementById('bottomNav').style.display = 'flex';
-    document.getElementById('userName').textContent = userName;
-    loadState();
-    renderLevels();
-    updateDashboard();
-    showToast('🎉 Welcome, ' + userName + '! Start with Level 1.', 'success');
-  }, 600);
-}
-
-// ===================== LEVEL RENDERING =====================
-function renderLevels() {
-  const container = document.getElementById('levelsContainer');
-  container.innerHTML = LEVELS.map(level => {
-    const isLocked = level.id > currentLevel;
-    const isCompleted = level.id < currentLevel;
-    const isJustUnlocked = level.id === currentLevel && justCompletedLevel === (level.id - 1);
-    const progress = levelProgress[level.id] || { practiced: [], stars: 0 };
-    const practicedCount = progress.practiced.length;
-    const totalPhrases = level.phrases.length;
-    const pct = Math.round((practicedCount / totalPhrases) * 100);
-    const isOpen = level.id === currentLevel;
-
-    return `
-      <div class="level-card ${isLocked ? 'locked' : ''} ${isCompleted ? 'completed' : ''} ${isJustUnlocked ? 'just-unlocked' : ''}" data-level="${level.id}">
-        <div class="level-header" onclick="toggleLevel(${level.id})">
-          <div class="level-number ${isLocked ? 'locked' : isCompleted ? 'completed' : 'active'}">
-            ${isLocked ? '🔒' : isCompleted ? '✓' : level.id}
-          </div>
-          <div class="level-info">
-            <div class="level-title">${level.title}</div>
-            <div class="level-subtitle">${level.subtitle}</div>
-          </div>
-          ${isLocked ? '<div class="level-lock-icon">🔒</div>' : `
-            <div class="level-stars">
-              <span class="star ${progress.stars >= 1 ? 'filled' : ''}">⭐</span>
-              <span class="star ${progress.stars >= 2 ? 'filled' : ''}">⭐</span>
-              <span class="star ${progress.stars >= 3 ? 'filled' : ''}">⭐</span>
-            </div>
-          `}
-        </div>
-        ${!isLocked ? `
-          <div class="level-progress">
-            <div class="level-progress-bar-bg"><div class="level-progress-bar-fill" style="width:${pct}%"></div></div>
-            <span class="level-progress-text">${practicedCount}/${totalPhrases}</span>
-          </div>
-          <div class="level-content ${isOpen ? 'open' : ''}" id="level-content-${level.id}">
-            <div class="phrase-list">
-              ${level.phrases.map((p, idx) => `
-                <div class="phrase-row ${progress.practiced.includes(p.id) ? 'practiced' : ''} ${isJustUnlocked && idx === 0 ? 'highlighted' : ''}" data-phrase="${p.id}">
-                  <span class="phrase-check">✓</span>
-                  <div style="flex:1">
-                    <div class="phrase-text-small">${p.text}</div>
-                    <div class="phrase-pronun-small">${p.pronun} — ${p.meaning}</div>
-                  </div>
-                  <div class="phrase-actions-small">
-                    <button class="mini-btn play" onclick="practicePhrase('${p.id}', ${level.id}, this)" data-text="${encodeURIComponent(p.text)}">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-                    </button>
-                    <button class="mini-btn fav ${favorites.has(p.id) ? 'active' : ''}" onclick="toggleFav('${p.id}', this)">
-                      <svg viewBox="0 0 24 24" fill="${favorites.has(p.id) ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
-                    </button>
-                  </div>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-        ` : ''}
-      </div>
-    `;
-  }).join('');
-}
-
-function toggleLevel(levelId) {
-  if (levelId > currentLevel) {
-    showToast('🔒 Complete Level ' + (levelId - 1) + ' first!', 'warning');
-    return;
-  }
-  const content = document.getElementById('level-content-' + levelId);
-  if (content) content.classList.toggle('open');
-}
-
-// ===================== PRACTICE & LEVEL COMPLETE =====================
-function practicePhrase(phraseId, levelId, btn) {
-  const text = decodeURIComponent(btn.dataset.text || '');
-  speak(text, btn);
-
-  if (!levelProgress[levelId]) levelProgress[levelId] = { practiced: [], stars: 0 };
-
-  const alreadyPracticed = levelProgress[levelId].practiced.includes(phraseId);
-
-  if (!alreadyPracticed) {
-    levelProgress[levelId].practiced.push(phraseId);
-    totalXP += 10;
-    dailyPracticed++;
-
-    const row = document.querySelector('[data-phrase="' + phraseId + '"]');
-    if (row) row.classList.add('practiced');
-
-    const level = LEVELS.find(l => l.id === levelId);
-    const practicedCount = levelProgress[levelId].practiced.length;
-    const totalPhrases = level.phrases.length;
-
-    if (practicedCount >= totalPhrases) {
-      levelProgress[levelId].stars = 3;
-    } else if (practicedCount >= totalPhrases * 0.6) {
-      levelProgress[levelId].stars = 2;
-    } else if (practicedCount >= totalPhrases * 0.3) {
-      levelProgress[levelId].stars = 1;
-    }
-
-    saveState();
-    updateDashboard();
-
-    if (practicedCount === totalPhrases) {
-      justCompletedLevel = levelId;
-      setTimeout(() => showLevelComplete(levelId), 2000);
-    }
-  }
-}
-
-// ===================== LEVEL COMPLETE SCREEN =====================
-function showLevelComplete(levelId) {
-  const level = LEVELS.find(l => l.id === levelId);
-  const progress = levelProgress[levelId] || { practiced: [], stars: 0 };
-  const xpEarned = progress.practiced.length * 10;
-
-  document.getElementById('completeTitle').textContent = 'Level ' + levelId + ' Complete!';
-  document.getElementById('completeSubtitle').textContent = 'Amazing work, ' + userName + '!';
-  document.getElementById('statPhrases').textContent = progress.practiced.length + '/' + level.phrases.length;
-  document.getElementById('statXP').textContent = '+' + xpEarned;
-  document.getElementById('statTotalXP').textContent = totalXP;
-
-  const stars = document.querySelectorAll('.complete-star');
-  stars.forEach((s, i) => s.classList.toggle('earned', i < progress.stars));
-
-  document.getElementById('levelCompleteOverlay').classList.add('show');
-}
-
-function showUnlockScreen() {
-  document.getElementById('levelCompleteOverlay').classList.remove('show');
-
-  const nextLevel = LEVELS.find(l => l.id === (justCompletedLevel + 1));
-  if (!nextLevel) {
-    showToast('🏆 All levels complete! You are a master!', 'success');
-    return;
-  }
-
-  document.getElementById('unlockNumber').textContent = nextLevel.id;
-  document.getElementById('unlockTitle').textContent = nextLevel.title;
-  document.getElementById('unlockSubtitle').textContent = nextLevel.subtitle;
-
-  // Preview first 3 phrases
-  const previews = nextLevel.phrases.slice(0, 3);
-  document.getElementById('unlockPreview1').textContent = previews[0]?.text + ' — ' + previews[0]?.meaning;
-  document.getElementById('unlockPreview2').textContent = previews[1]?.text + ' — ' + previews[1]?.meaning;
-  document.getElementById('unlockPreview3').textContent = previews[2]?.text + ' — ' + previews[2]?.meaning;
-
-  // Coming soon
-  const comingLevel = LEVELS.find(l => l.id === (nextLevel.id + 1));
-  document.getElementById('unlockComingSoon').textContent = comingLevel
-    ? '🔒 Level ' + comingLevel.id + ': ' + comingLevel.title + ' — coming next'
-    : '🏆 Final level! You are almost there!';
-
-  document.getElementById('unlockOverlay').classList.add('show');
-}
-
-function startNextLevel() {
-  document.getElementById('unlockOverlay').classList.remove('show');
-
-  currentLevel = justCompletedLevel + 1;
-  justCompletedLevel = null;
-  saveState();
-  renderLevels();
-  updateDashboard();
-
-  // Scroll to new level
-  setTimeout(() => {
-    const newLevelCard = document.querySelector('[data-level="' + currentLevel + '"]');
-    if (newLevelCard) {
-      newLevelCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      // Auto-open
-      const content = document.getElementById('level-content-' + currentLevel);
-      if (content) content.classList.add('open');
-    }
-    showToast('🔓 Level ' + currentLevel + ' unlocked! Let us go!', 'success');
-  }, 300);
-}
-
-// ===================== FAVORITES =====================
-function toggleFav(phraseId, btn) {
-  if (favorites.has(phraseId)) {
-    favorites.delete(phraseId);
-    btn.classList.remove('active');
-    btn.querySelector('svg').setAttribute('fill', 'none');
-    showToast('Removed from favorites', 'warning');
-  } else {
-    favorites.add(phraseId);
-    btn.classList.add('active');
-    btn.querySelector('svg').setAttribute('fill', 'currentColor');
-    showToast('⭐ Added to favorites!', 'success');
-  }
-  saveState();
-}
-
-// ===================== DASHBOARD =====================
-function updateDashboard() {
-  document.getElementById('xpCount').textContent = totalXP;
-  const goalPct = Math.min((dailyPracticed / DAILY_GOAL) * 100, 100);
-  document.getElementById('dailyGoalCount').textContent = dailyPracticed + ' / ' + DAILY_GOAL;
-  document.getElementById('goalBarFill').style.width = goalPct + '%';
-
-  const today = new Date().toDateString();
-  if (dailyPracticed > 0 && lastPracticeDate !== today) {
-    const yesterday = new Date(Date.now() - 86400000).toDateString();
-    if (lastPracticeDate === yesterday) streak++;
-    else if (!lastPracticeDate) streak = 1;
-    lastPracticeDate = today;
-    saveState();
-  }
-
-  const streakBadge = document.getElementById('streakBadge');
-  if (streak > 0) {
-    streakBadge.style.display = 'flex';
-    document.getElementById('streakCount').textContent = streak;
-  }
-}
-
-// ===================== REVIEW TAB =====================
-function renderReview() {
-  const allPracticed = [];
-  Object.entries(levelProgress).forEach(([levelId, progress]) => {
-    const level = LEVELS.find(l => l.id === parseInt(levelId));
-    if (level) {
-      progress.practiced.forEach(pid => {
-        const phrase = level.phrases.find(p => p.id === pid);
-        if (phrase) allPracticed.push({ ...phrase, levelId });
-      });
-    }
-  });
-
-  const list = document.getElementById('reviewList');
-  if (allPracticed.length === 0) {
-    list.innerHTML = '<div class="level-locked-msg" style="grid-column:1/-1;"><span class="lock-emoji">📚</span>Practice some phrases first to see them here!</div>';
-    return;
-  }
-
-  const shuffled = allPracticed.sort(() => Math.random() - 0.5).slice(0, 5);
-  document.getElementById('reviewCount').textContent = shuffled.length + ' phrases to review';
-
-  list.innerHTML = shuffled.map(p => `
-    <div class="phrase-row">
-      <span class="phrase-check" style="opacity:1;color:var(--accent)">✓</span>
-      <div style="flex:1">
-        <div class="phrase-text-small">${p.text}</div>
-        <div class="phrase-pronun-small">${p.pronun}</div>
-      </div>
-      <div class="phrase-actions-small">
-        <button class="mini-btn play" onclick="speak(decodeURIComponent('${encodeURIComponent(p.text)}'), this)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/></svg>
-        </button>
-      </div>
-    </div>
-  `).join('');
-}
-
-// ===================== TABS =====================
-function switchTab(tab) {
-  document.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.remove('active'));
-  event.currentTarget.classList.add('active');
-
-  const dashboard = document.getElementById('dashboard');
-  const levels = document.getElementById('levelsContainer');
-  const review = document.getElementById('reviewSection');
-
-  if (tab === 'levels') {
-    dashboard.style.display = 'block';
-    levels.style.display = 'block';
-    review.style.display = 'none';
-  } else if (tab === 'review') {
-    dashboard.style.display = 'none';
-    levels.style.display = 'none';
-    review.style.display = 'block';
-    renderReview();
-  } else if (tab === 'profile') {
-    const completedLevels = Object.entries(levelProgress).filter(([_, p]) => p.stars > 0).length;
-    const totalPracticed = Object.values(levelProgress).reduce((sum, p) => sum + p.practiced.length, 0);
-    showToast('📊 ' + userName + ': ' + totalPracticed + ' phrases | ' + completedLevels + '/' + LEVELS.length + ' levels | ' + totalXP + ' XP | ' + streak + ' day streak', 'success');
-  }
-}
-
-// ===================== STORAGE =====================
-function saveState() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      userName, currentLevel, levelProgress, totalXP, streak, lastPracticeDate,
-      favorites: Array.from(favorites), dailyPracticed
-    }));
-  } catch (e) {}
-}
-
-function loadState() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    if (saved) {
-      if (saved.userName) userName = saved.userName;
-      if (saved.currentLevel) currentLevel = saved.currentLevel;
-      if (saved.levelProgress) levelProgress = saved.levelProgress;
-      if (saved.totalXP) totalXP = saved.totalXP;
-      if (saved.streak) streak = saved.streak;
-      if (saved.lastPracticeDate) lastPracticeDate = saved.lastPracticeDate;
-      if (saved.favorites) favorites = new Set(saved.favorites);
-      if (saved.dailyPracticed !== undefined) dailyPracticed = saved.dailyPracticed;
-      const today = new Date().toDateString();
-      if (lastPracticeDate !== today) dailyPracticed = 0;
-    }
-  } catch (e) {}
-}
-
-// ===================== TOAST =====================
-function showToast(message, type) {
-  const container = document.getElementById('toastContainer');
-  const toast = document.createElement('div');
-  toast.className = 'toast ' + (type || 'success');
-  toast.innerHTML = '<span>' + message + '</span>';
-  container.appendChild(toast);
-  requestAnimationFrame(() => toast.classList.add('show'));
-  setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 2500);
-}
-
-// ===================== INIT =====================
-document.addEventListener('DOMContentLoaded', () => {
-  initVoices();
-  try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    if (saved && saved.userName) {
-      userName = saved.userName;
-      nameInput.value = userName;
-      startBtn.disabled = false;
-      setTimeout(() => startApp(), 300);
-    }
-  } catch (e) {}
-});
-</script>
-</body>
-</html>
+‎html
+‎<!DOCTYPE html>
+‎<html lang="en" data-theme="dark">
+‎<head>
+‎  <meta charset="UTF-8" />
+‎  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+‎  <meta name="apple-mobile-web-app-capable" content="yes" />
+‎  <meta name="theme-color" content="#0d0d14" />
+‎  <title>AccentPro — American Accent Trainer</title>
+‎  <link rel="preconnect" href="https://fonts.googleapis.com" />
+‎  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+‎  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+‎  <link rel="stylesheet" href="style.css" />
+‎</head>
+‎<body>
+‎
+‎<!-- ═══════════════════════════════════ TOP NAV ═══════════════════════════════════ -->
+‎<header class="topbar">
+‎  <div class="topbar-left">
+‎    <span class="logo">🇺🇸 AccentPro</span>
+‎    <span class="streak-badge" id="streakBadge">🔥 0</span>
+‎  </div>
+‎  <div class="topbar-right">
+‎    <div class="xp-pill" id="xpPill">0 XP</div>
+‎    <button class="icon-btn" id="themeToggle" aria-label="Toggle theme">☀️</button>
+‎  </div>
+‎</header>
+‎
+‎<!-- ═══════════════════════════════════ MAIN APP ═══════════════════════════════════ -->
+‎<main class="app">
+‎
+‎  <!-- ─────────── HERO ─────────── -->
+‎  <section class="hero" id="heroSection">
+‎    <div class="hero-bg-text">SPEAK</div>
+‎    <h1 class="hero-title">Train Your<br/><em>American Accent</em></h1>
+‎    <p class="hero-sub">7-day program · Danger pairs · Real recording</p>
+‎    <button class="btn-primary hero-cta" id="heroCta">Start Day <span id="heroDayNum">1</span></button>
+‎    <div class="day-pills" id="dayPills">
+‎      <!-- injected by JS -->
+‎    </div>
+‎  </section>
+‎
+‎  <!-- ─────────── TRAINER PANEL ─────────── -->
+‎  <section class="trainer" id="trainerSection" hidden>
+‎
+‎    <!-- Header -->
+‎    <div class="trainer-header">
+‎      <button class="icon-btn back-btn" id="backBtn">← Back</button>
+‎      <div class="day-label" id="trainerDayLabel">Day 1</div>
+‎      <div class="pair-group-label" id="pairGroupLabel">Loading…</div>
+‎    </div>
+‎
+‎    <!-- Trap label -->
+‎    <div class="trap-badge" id="trapBadge">The 'ee' vs 'i' Trap</div>
+‎
+‎    <!-- Word card -->
+‎    <div class="word-card" id="wordCard">
+‎      <div class="word-pair">
+‎        <span class="word-a" id="wordA">Ship</span>
+‎        <span class="vs-sep">↔</span>
+‎        <span class="word-b" id="wordB">Sheep</span>
+‎      </div>
+‎      <div class="phonetics">
+‎        <span id="phonA">/ʃɪp/</span>
+‎        <span></span>
+‎        <span id="phonB">/ʃiːp/</span>
+‎      </div>
+‎      <div class="tip-box" id="tipBox"></div>
+‎    </div>
+‎
+‎    <!-- Waveform -->
+‎    <div class="waveform-area" id="waveformArea">
+‎      <canvas id="waveCanvas" width="340" height="60"></canvas>
+‎      <div class="waveform-labels">
+‎        <span>Native</span>
+‎        <span id="waveStatus">—</span>
+‎        <span>You</span>
+‎      </div>
+‎    </div>
+‎
+‎    <!-- Flow buttons -->
+‎    <div class="flow-controls">
+‎      <button class="flow-btn" id="btnPlayNative">
+‎        <span class="flow-icon">▶</span>
+‎        <span>Play Native</span>
+‎      </button>
+‎
+‎      <button class="flow-btn record-btn" id="btnRecord">
+‎        <span class="flow-icon rec-dot">⏺</span>
+‎        <span id="recordLabel">Record Yourself</span>
+‎      </button>
+‎
+‎      <button class="flow-btn" id="btnHearBoth" disabled>
+‎        <span class="flow-icon">👂</span>
+‎        <span>Hear Both</span>
+‎      </button>
+‎
+‎      <button class="flow-btn next-btn" id="btnNext" disabled>
+‎        <span class="flow-icon">→</span>
+‎        <span>Next Word</span>
+‎      </button>
+‎    </div>
+‎
+‎    <!-- Progress inside trainer -->
+‎    <div class="trainer-progress">
+‎      <div class="prog-bar-wrap">
+‎        <div class="prog-bar" id="progBar" style="width:0%"></div>
+‎      </div>
+‎      <span class="prog-text" id="progText">0 / 0</span>
+‎    </div>
+‎
+‎  </section>
+‎
+‎  <!-- ─────────── DAY COMPLETE OVERLAY ─────────── -->
+‎  <div class="overlay" id="dayCompleteOverlay" hidden>
+‎    <div class="overlay-card">
+‎      <div class="overlay-emoji" id="overlayEmoji">🎉</div>
+‎      <h2 id="overlayTitle">Day Complete!</h2>
+‎      <p id="overlayMsg">You nailed Day 1 — Vowels.</p>
+‎      <div class="overlay-stats">
+‎        <div class="stat"><span id="statWords">0</span><small>Words</small></div>
+‎        <div class="stat"><span id="statStreak">0</span><small>Day Streak</small></div>
+‎        <div class="stat"><span id="statXP">0</span><small>XP Earned</small></div>
+‎      </div>
+‎      <button class="btn-primary" id="overlayNext">Continue →</button>
+‎    </div>
+‎  </div>
+‎
+‎</main>
+‎
+‎<!-- ═══════════════════════════════════ BOTTOM NAV ═══════════════════════════════════ -->
+‎<nav class="bottomnav">
+‎  <button class="nav-tab active" data-tab="train" id="tabTrain">
+‎    <span>🎯</span><small>Train</small>
+‎  </button>
+‎  <button class="nav-tab" data-tab="progress" id="tabProgress">
+‎    <span>📈</span><small>Progress</small>
+‎  </button>
+‎  <button class="nav-tab" data-tab="settings" id="tabSettings">
+‎    <span>⚙️</span><small>Settings</small>
+‎  </button>
+‎</nav>
+‎
+‎<!-- ═══════════════════════════════════ PROGRESS TAB ═══════════════════════════════════ -->
+‎<section class="tab-panel" id="panelProgress" hidden>
+‎  <h2 class="panel-title">Your Journey</h2>
+‎  <div class="week-grid" id="weekGrid">
+‎    <!-- injected -->
+‎  </div>
+‎  <div class="stats-row">
+‎    <div class="big-stat"><span id="bigStreak">0</span><small>Day Streak</small></div>
+‎    <div class="big-stat"><span id="bigXP">0</span><small>Total XP</small></div>
+‎    <div class="big-stat"><span id="bigWords">0</span><small>Words Done</small></div>
+‎  </div>
+‎  <button class="btn-secondary" id="btnResetProgress">Reset Progress</button>
+‎</section>
+‎
+‎<!-- ═══════════════════════════════════ SETTINGS TAB ═══════════════════════════════════ -->
+‎<section class="tab-panel" id="panelSettings" hidden>
+‎  <h2 class="panel-title">Settings</h2>
+‎
+‎  <div class="settings-card">
+‎    <label class="setting-row">
+‎      <span>Dark Mode</span>
+‎      <input type="checkbox" id="darkModeCheck" class="toggle-check" checked />
+‎      <span class="toggle-slider"></span>
+‎    </label>
+‎    <label class="setting-row">
+‎      <span>Auto-play Native</span>
+‎      <input type="checkbox" id="autoPlayCheck" class="toggle-check" />
+‎      <span class="toggle-slider"></span>
+‎    </label>
+‎  </div>
+‎
+‎  <div class="settings-card">
+‎    <div class="setting-row">
+‎      <span>TTS Voice Speed</span>
+‎      <input type="range" id="speedRange" min="0.5" max="1.2" step="0.1" value="0.85" />
+‎      <span id="speedVal">0.85×</span>
+‎    </div>
+‎  </div>
+‎
+‎  <div class="settings-card elevenlabs-card">
+‎    <h3>🎙️ Upgrade to ElevenLabs TTS</h3>
+‎    <p>Paste your ElevenLabs API key for studio-quality native audio.</p>
+‎    <input type="password" id="elInput" class="text-input" placeholder="sk-…" />
+‎    <button class="btn-primary small" id="btnSaveEl">Save Key</button>
+‎    <span class="el-status" id="elStatus"></span>
+‎  </div>
+‎</section>
+‎
+‎<!-- confetti container -->
+‎<div id="confettiContainer" aria-hidden="true"></div>
+‎
+‎<script src="script.js"></script>
+‎</body>
+‎</html>
+‎
