@@ -1,3 +1,11 @@
+window.onerror = function (msg, src, line, col, err) {
+  alert(
+    "ERROR:\n" +
+    msg +
+    "\nLine: " + line +
+    "\nColumn: " + col
+  );
+};
 /* ═══════════════════════════════════════════════════
 ‎   AccentPro — script.js
 ‎   7-day plan · Danger pairs · Web Speech · LocalStorage
