@@ -1,3 +1,4 @@
+console.log("SCRIPT STARTED");
 /* ═══════════════════════════════════════════════════
 ‎   AccentPro — script.js
 ‎   7-day plan · Danger pairs · Web Speech · LocalStorage
